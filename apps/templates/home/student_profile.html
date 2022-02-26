@@ -147,7 +147,7 @@
                                             <div class="form-group col-12">
                                                 {% if student %}
                                                     <button type="submit" name="update_student" value="{{student.id}}" class="btn btn-primary">Cập nhập</button>
-                                                    <a href="/camera/{{student.id}}/{{student.student_code}}" class="btn btn-primary" role="button" aria-pressed="true">Lấy dữ liệu hình ảnh</a>
+                                                    <a href="/camera/{{student.id}}" class="btn btn-primary" role="button" aria-pressed="true">Lấy dữ liệu hình ảnh</a>
                                                 {% else %}
                                                     <button type="submit" name="new_student" class="btn btn-primary">Thêm mới</button>
                                                 {% endif %}

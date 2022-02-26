@@ -26,110 +26,126 @@ def index():
 
 #-------------------------------DIEMDANH-------------------------------------
 
-@blueprint.route('/diemdanh/<int:id>')
+@blueprint.route('/diemdanh/<int:id>', methods=['GET', 'POST'])
 def diemdanh(id):
     classw = ClassWeekday.query.filter_by(id=id).first()
     cid = classw.class_id
     wid = classw.weekday_id
 
+    # select name class and weekday
+    lesson = Class.query.filter_by(id=cid).first()
+    wname = Weekday.query.filter_by(id=wid).first()
+
     # All sinh vien co trong lop
     class_students = ClassStudent.query.filter_by(class_id=int(cid)).all()
     # All sinh vien
     students = Student.query.all()
-    
-    face_detector = dlib.get_frontal_face_detector()
-    recognier = cv2.face.LBPHFaceRecognizer_create()
-    recognier.read('recoginzer/trainningData.yml')
-    fontface = cv2.FONT_HERSHEY_SIMPLEX
-    cap = cv2.VideoCapture(0)
-    while True:
-        success, frame = cap.read()
-        if not success:
-            cap.release()
-            break
-        else:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_detector(gray)
 
-            for face in faces:
-                x1 = face.left()
-                y1 = face.top()
-                x2 = face.right()
-                y2 = face.bottom()
-                roi_gray = gray[y1: y2, x1: x2]
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0,225,0), 2)
-                    # ss gray frame
-                id, confidence = recognier.predict(roi_gray)
-                    # print(id)
+    global cap
 
-                if confidence < 40:
-                        
-                    # get msv
-                    msv = None
-                    for student in students:
-                        if student.id == id:
-                            msv = student.student_code
-                            break
+    if 'start' in request.form:
+        face_detector = dlib.get_frontal_face_detector()
+        recognier = cv2.face.LBPHFaceRecognizer_create()
+        recognier.read('recoginzer/trainningData.yml')
+        fontface = cv2.FONT_HERSHEY_SIMPLEX
+        cap = cv2.VideoCapture(0)
+        while True:
+            success, frame = cap.read()
+            if not success:
+                cap.release()
+                break
+            else:
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                faces = face_detector(gray)
 
-                    # check student trong danh sach lop
-                    check = False
-                    for student in class_students:
-                        if student.student_id == id:
-                            check = True
-                            break
-                    if check:
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0,225,0), 2)
-                        cv2.putText(frame, msv, (x1, y2+30), fontface, 1, (0,225,0), 2)
+                for face in faces:
+                    x1 = face.left()
+                    y1 = face.top()
+                    x2 = face.right()
+                    y2 = face.bottom()
+                    roi_gray = gray[y1: y2, x1: x2]
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0,225,0), 2)
+                        # ss gray frame
+                    id, confidence = recognier.predict(roi_gray)
+                        # print(id)
 
-                        # All sinh vien da diem danh
-                        checkAtt = Attendance.query.filter_by(class_id=cid, weekday_id=wid).all()
-                        # check student trong danh sach diem danh
+                    if confidence < 40:
+                            
+                        # get msv
+                        msv = None
+                        for student in students:
+                            if student.id == id:
+                                msv = student.student_code
+                                break
+
+                        # check student trong danh sach lop
                         check = False
-                        for student in checkAtt:
+                        for student in class_students:
                             if student.student_id == id:
                                 check = True
                                 break
+                        if check:
+                            cv2.rectangle(frame, (x1, y1), (x2, y2), (0,225,0), 2)
+                            cv2.putText(frame, msv, (x1, y2+30), fontface, 1, (0,225,0), 2)
 
-                        if not check:
-                            # Diem danh | chua co trong Attendance
-                            attendance = Attendance('Đã điểm danh', cid, wid, id)
-                            db.session.add(attendance)
-                            db.session.commit()
+                            # All sinh vien da diem danh
+                            checkAtt = Attendance.query.filter_by(class_id=cid, weekday_id=wid).all()
+                            # check student trong danh sach diem danh
+                            check = False
+                            for student in checkAtt:
+                                if student.student_id == id:
+                                    check = True
+                                    break
+
+                            if not check:
+                                # Diem danh | chua co trong Attendance
+                                attendance = Attendance('Đã điểm danh', cid, wid, id)
+                                db.session.add(attendance)
+                                db.session.commit()
+                        else:
+                            # K diem danh | k co trong ClassStudent
+                            cv2.rectangle(frame, (x1, y1), (x2, y2), (225,0,0), 2)
+                            cv2.putText(frame, msv, (x1, y2+30), fontface, 1, (225,0,0), 2)
                     else:
-                        # K diem danh | k co trong ClassStudent
-                        cv2.rectangle(frame, (x1, y1), (x2, y2), (225,0,0), 2)
-                        cv2.putText(frame, msv, (x1, y2+30), fontface, 1, (225,0,0), 2)
-                else:
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), (0,0,225), 2)
-                    cv2.putText(frame, 'Unknow', (x1, y2+30), fontface, 1, (0,0,225), 2)
+                        cv2.rectangle(frame, (x1, y1), (x2, y2), (0,0,225), 2)
+                        cv2.putText(frame, 'Unknow', (x1, y2+30), fontface, 1, (0,0,225), 2)
 
-            cv2.imshow('DETECTING FACE', frame)
-            if(cv2.waitKey(1) == ord('q')):
-                break
-    cap.release()
-    cv2.destroyAllWindows()
+                cv2.imshow(lesson.lesson+' | '+wname.name, frame)
+                if(cv2.waitKey(1) == ord('q')):
+                    break
+            
+        cap.release()
+        return render_template('home/diemdanh.html', segment='diemdanh', btn='end', lesson=lesson, wname=wname)
 
-    # All sinh vien da diem danh
-    checkAtt = Attendance.query.filter_by(class_id=cid, weekday_id=wid).all()
-    for cs in class_students:
-        check = True
-        for att in checkAtt:
-            if cs.student_id == att.student_id:
-                check = False
-                break
-        if check:
-            attendance = Attendance('Vắng', cid, wid, cs.student_id)
-            db.session.add(attendance)
-            db.session.commit()
+    if 'end' in request.form:
+        
+        cv2.destroyAllWindows()
 
-    return render_template('home/diemdanh.html', segment='diemdanh')
+        # All sinh vien da diem danh
+        checkAtt = Attendance.query.filter_by(class_id=cid, weekday_id=wid).all()
+        for cs in class_students:
+            check = True
+            for att in checkAtt:
+                if cs.student_id == att.student_id:
+                    check = False
+                    break
+            if check:
+                attendance = Attendance('Vắng', cid, wid, cs.student_id)
+                db.session.add(attendance)
+                db.session.commit()
+
+        return redirect(url_for('home_blueprint.attendance'))
+
+    
+    return render_template('home/diemdanh.html', segment='diemdanh', btn='start', lesson=lesson, wname=wname)
 
 
 #-------------------------------GETDATA-------------------------------------
 
-@blueprint.route('/camera/<int:id>/<string:student_code>')
-def camera(id, student_code):
-    return render_template('home/camera.html', segment='camera', id=id, student_code=student_code)
+@blueprint.route('/camera/<int:id>')
+def camera(id):
+    stu = Student.query.filter_by(id=id).first()
+    return render_template('home/camera.html', segment='camera', id=id, student_code=stu.student_code, first_name=stu.first_name, last_name=stu.last_name)
 
 def training():
     recognier = cv2.face.LBPHFaceRecognizer_create()

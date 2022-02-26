@@ -16,7 +16,7 @@
                     <div class="row align-items-center">
                         <div class="col-md-12">
                             <div class="page-header-title">
-                                <h5 class="m-b-10">Student List</h5>
+                                <h5 class="m-b-10">Attendance</h5>
                             </div>
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item"><a href="index.html"><i class="feather icon-home"></i></a></li>
@@ -35,14 +35,20 @@
                         <div class="col-sm-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h5>Get Data</h5>
+                                    <h5>{{ lesson.lesson+' | '+wname.name }}</h5>
                                 </div>
                                 <div class="card-body">
                                     <div class="text-center">
                                         
                                     </div>
                                     <div class="text-center">
-                                        <a href="{{ url_for('home_blueprint.attendance') }}" class="btn btn-primary mt-4" role="button" aria-pressed="true">Kết thúc điểm danh</a>
+                                        <form role="form" method="post" action="">
+                                            {% if btn == 'start' %}
+                                                <button type="submit" name="start" class="btn btn-primary">Bắt đầu điểm danh</button>
+                                            {% else %}
+                                                <button type="submit" name="end" class="btn btn-primary">Kết thúc điểm danh</button>
+                                            {% endif %}
+                                        </form>
                                     </div>
                                 </div>
                             </div>
