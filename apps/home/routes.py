@@ -69,7 +69,7 @@ def diemdanh(id):
                     id, confidence = recognier.predict(roi_gray)
                         # print(id)
 
-                    if confidence < 40:
+                    if confidence < 69:
                             
                         # get msv
                         msv = None
@@ -136,7 +136,6 @@ def diemdanh(id):
 
         return redirect(url_for('home_blueprint.attendance'))
 
-    
     return render_template('home/diemdanh.html', segment='diemdanh', btn='start', lesson=lesson, wname=wname)
 
 
